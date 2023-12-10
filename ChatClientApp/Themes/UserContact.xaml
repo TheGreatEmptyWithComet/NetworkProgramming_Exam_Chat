@@ -1,0 +1,24 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style TargetType="{x:Type ListViewItem}" x:Key="UserContact">
+        <!--<Setter Property="Background" Value="#393B40"/>-->
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ListViewItem}">
+                    <Border Background="{TemplateBinding Background}">
+                        <StackPanel Orientation="Horizontal" Margin="10 0 0 0">
+                            <Border Width="8" Height="8"
+                                    Background="CornflowerBlue"
+                                    CornerRadius="25"/>
+                            <Label Content="{Binding}"
+                                   Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

@@ -5,16 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatClientApp"
         mc:Ignorable="d"
-        Height="450" Width="800"
+        Height="600" Width="1000"
         Background="#36393F"
         WindowStyle="None"
         AllowsTransparency="True"
+        FontSize="14"
         ResizeMode="CanResizeWithGrip" Closing="Window_Closing">
-
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="25"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -25,13 +25,13 @@
         <!-- Top menu -->
         <Border Background="#252525"
                 MouseDown="Border_MouseDown"
-                Grid.ColumnSpan="2">
+                Grid.ColumnSpan="2" >
 
             <Grid HorizontalAlignment="Stretch">
                 <!-- Chat name -->
                 <Label Content="FunnyChat" 
-                           Foreground="Gray"
-                           FontWeight="SemiBold"/>
+                       Foreground="Gray"
+                       FontWeight="SemiBold"/>
 
                 <!-- Window operating buttons -->
                 <StackPanel HorizontalAlignment="Right"
@@ -65,77 +65,86 @@
         </Border>
 
         <!-- Users list -->
-        <DockPanel Grid.Row="1" Grid.Column="0">
-            <TextBox Height="25" 
-                     DockPanel.Dock="Top"
-                     Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"/>
-            <Button Height="25"
-                    DockPanel.Dock="Top"
-                    Content="Join chat"
-                    Command="{Binding JoinChatCommand}"
-                    >
-                <Button.Style>
-                    <Style TargetType="{x:Type Button}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding ChatingIsAllowed}" Value="True">
-                                <Setter Property="IsEnabled" Value="False"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-            </Button>
-            <TextBlock Text="Users:"
-                       FontWeight="Bold"
-                       DockPanel.Dock="Top"/>
-            <ListView ItemsSource="{Binding Users}"/>
+        <DockPanel Grid.Row="1" Grid.Column="0" Background="#2F3136">
+            <!-- Join chat row -->
+            <Grid DockPanel.Dock="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox Height="50"
+                         Grid.ColumnSpan="2"
+                         VerticalContentAlignment="Center"
+                         Style="{DynamicResource Style_UserNameMessagebox}"/>
+
+                <Button Grid.Column="1"
+                        Margin="0 5 15 0"
+                        BorderThickness="0"
+                        Command="{Binding JoinChatCommand}"
+                        Style="{DynamicResource Style_JoinButton}"
+                        ToolTip="Join chat">
+                    <Button.Content>
+                        <Image Width="30">
+                            <Image.Source>
+                                <BitmapImage DecodePixelWidth="40" UriSource="./Icons/JoinIcon.png"/>
+                            </Image.Source>
+                        </Image>
+                    </Button.Content>
+                </Button>
+            </Grid>
+            
+            <!-- Users list -->
+            <Label Content="Users:"
+                   FontWeight="Medium"
+                   Foreground="Gray"
+                   Margin="8, 0, 0, 0" 
+                   DockPanel.Dock="Top"/>
+            <ListView ItemsSource="{Binding Users}"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      ItemContainerStyle="{StaticResource UserContact}"/>
         </DockPanel>
 
         <!-- Chat part -->
         <DockPanel Grid.Row="1" Grid.Column="1" >
             <!-- Send message row -->
-            <DockPanel DockPanel.Dock="Bottom">
-                <Button Width="55" 
-                        Content="Send"
-                        DockPanel.Dock="Right"
-                         Command="{Binding SendMessageCommand}">
-                    <Button.Style>
-                        <Style TargetType="{x:Type Button}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding ChatingIsAllowed}" Value="False">
-                                    <Setter Property="IsEnabled" Value="False"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-                <TextBox Height="55"
+            <Grid DockPanel.Dock="Bottom">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox Height="50"
+                         Grid.ColumnSpan="2"
                          VerticalContentAlignment="Center"
-                         Text="{Binding ClientMessage}"
-                         Background="Transparent"
-                         Foreground="AntiqueWhite"/>
-            </DockPanel>
+                         Style="{DynamicResource Style_Messagebox}"/>
+
+                <Button Grid.Column="1"
+                        Margin="0 5 15 0"
+                        BorderThickness="0"
+                        Command="{Binding SendMessageCommand}"
+                        Style="{DynamicResource Style_SendButton}"
+                        ToolTip="Send message">
+                    <Button.Content>
+                        <Image Width="30">
+                            <Image.Source>
+                                <BitmapImage DecodePixelWidth="40" UriSource="./Icons/SendIcon2.png"/>
+                            </Image.Source>
+                        </Image>
+                    </Button.Content>
+                </Button>
+            </Grid>
 
             <!-- Chat window -->
-            <ScrollViewer VerticalScrollBarVisibility="Hidden" local:ScrollViewerAttachedProperties.ScrollToBottomOnChange="{Binding ChatLog}">
-                <TextBlock Text="{Binding Messages}" Foreground="AntiqueWhite"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" local:ScrollViewerAttachedProperties.ScrollToBottomOnChange="{Binding Messages}"
+                          HorizontalScrollBarVisibility="Disabled">
+                <ListView ItemsSource="{Binding Messages}"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          Margin="8 0 8 0"
+                          ItemContainerStyle="{DynamicResource Style_ChatItem}"/>
             </ScrollViewer>
         </DockPanel>
-
-
     </Grid>
-
-    <!--<DockPanel Margin="10">
-        <Grid DockPanel.Dock="Bottom" Margin="0 5 0 0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBox Text="{Binding ClientMessage}" Grid.Column="0" Background="#FFFFFEF0"/>
-            <Button Content="Send" Command="{Binding SendMessageCommand}" Grid.Column="1" Margin="5 0 0 0" Background="#FFCEF98D"/>
-        </Grid>
-        <ScrollViewer VerticalScrollBarVisibility="Hidden" local:ScrollViewerAttachedProperties.ScrollToBottomOnChange="{Binding ChatLog}">
-            <TextBlock Text="{Binding ChatLog, Mode=OneWay}" Background="#FFFFFEF0" />
-        </ScrollViewer>
-
-    </DockPanel>-->
 </Window>

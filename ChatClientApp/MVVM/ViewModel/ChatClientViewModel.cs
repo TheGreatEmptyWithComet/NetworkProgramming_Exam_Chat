@@ -26,10 +26,10 @@ namespace ChatClientApp
         }
 
 
-        //public ObservableCollection<MessageModel> Messages { get; set; } = new ObservableCollection<MessageModel>();
+        public ObservableCollection<MessageObject> Messages { get; set; } = new ObservableCollection<MessageObject>();
         public ObservableCollection<string> Users { get; set; } = new ObservableCollection<string>();
 
-        public string Messages { get; set; } = string.Empty;
+        //public string Messages { get; set; } = string.Empty;
 
         private string clientMessage = string.Empty;
         public string ClientMessage
@@ -62,7 +62,7 @@ namespace ChatClientApp
         {
             ChatClient = new ChatClient();
             ChatClient.Start();
-            ChatClient.OnMessageReseived += (message) => { Messages += (message + Environment.NewLine); NotifyPropertyChanged(nameof(Messages)); };
+            ChatClient.OnMessageReseived += (message) => Messages.Add(message);
             ChatClient.OnUserJoined += (userName) => AddUserTolist(userName);
             ChatClient.OnUserLeft += (userName) => RemoveUserFromlist(userName);
 
@@ -75,19 +75,22 @@ namespace ChatClientApp
             {
                 if (chatingIsAllowed)
                 {
-                    string message = $"[{DateTime.Now}]: [{ChatClient.UserName}]: {ClientMessage}";
-                    await ChatClient.SendMessageAsync(message);
+                    await ChatClient.SendMessageAsync(ClientMessage, MessageStatus.Usual);
                     ClientMessage = string.Empty;
                 }
             });
             JoinChatCommand = new RelayCommand(async () =>
             {
-                if (!string.IsNullOrEmpty(UserName))
+                if (!string.IsNullOrEmpty(UserName) && string.IsNullOrEmpty(ChatClient.UserName))
                 {
                     ChatClient.UserName = UserName;
                     ChatClient.NotifyUserJoinChat();
                     UserName = string.Empty;
                     ChatingIsAllowed = true;
+                }
+                else
+                {
+                    UserName = string.Empty;
                 }
             });
             LeftChatCommand = new RelayCommand(async () =>
@@ -98,12 +101,10 @@ namespace ChatClientApp
 
         private void AddUserTolist(string userName)
         {
-            //App.Current.Dispatcher.Invoke((Action)delegate { Users.Add(userName); });
             Users.Add(userName);
         }
         private void RemoveUserFromlist(string userName)
         {
-            //App.Current.Dispatcher.Invoke((Action)delegate {  });
             Users.Remove(userName);
         }
     }
