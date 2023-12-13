@@ -10,9 +10,9 @@
                     <Border Background="{TemplateBinding Background}">
                         <StackPanel Orientation="Horizontal" Margin="10 0 0 0">
                             <Border Width="8" Height="8"
-                                    Background="CornflowerBlue"
+                                    Background="{Binding Color}"
                                     CornerRadius="25"/>
-                            <Label Content="{Binding}"
+                            <Label Content="{Binding Name}"
                                    Foreground="White"/>
                         </StackPanel>
                     </Border>

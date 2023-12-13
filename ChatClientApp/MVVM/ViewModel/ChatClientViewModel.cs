@@ -14,23 +14,22 @@ namespace ChatClientApp
     {
         public ChatClient ChatClient { get; set; }
 
-        private bool chatingIsAllowed = false;
-        public bool ChatingIsAllowed
+        private bool chattingIsAllowed = false;
+        public bool ChattingIsAllowed
         {
-            get => chatingIsAllowed;
+            get => chattingIsAllowed;
             set
             {
-                chatingIsAllowed = value;
-                NotifyPropertyChanged(nameof(ChatingIsAllowed));
+                chattingIsAllowed = value;
+                NotifyPropertyChanged(nameof(ChattingIsAllowed));
             }
         }
 
 
         public ObservableCollection<MessageObject> Messages { get; set; } = new ObservableCollection<MessageObject>();
-        public ObservableCollection<string> Users { get; set; } = new ObservableCollection<string>();
+        public ObservableCollection<UserObject> Users { get; set; } = new ObservableCollection<UserObject>();
 
-        //public string Messages { get; set; } = string.Empty;
-
+        
         private string clientMessage = string.Empty;
         public string ClientMessage
         {
@@ -62,9 +61,9 @@ namespace ChatClientApp
         {
             ChatClient = new ChatClient();
             ChatClient.Start();
-            ChatClient.OnMessageReseived += (message) => Messages.Add(message);
-            ChatClient.OnUserJoined += (userName) => AddUserTolist(userName);
-            ChatClient.OnUserLeft += (userName) => RemoveUserFromlist(userName);
+            ChatClient.OnMessageReceived += (message) => Messages.Add(message);
+            ChatClient.OnUserJoined += (users) => AddUserToList(users);
+            ChatClient.OnUserLeft += (userId) => RemoveUserFromList(userId);
 
             InitCommands();
         }
@@ -73,7 +72,7 @@ namespace ChatClientApp
         {
             SendMessageCommand = new RelayCommand(async () =>
             {
-                if (chatingIsAllowed)
+                if (chattingIsAllowed)
                 {
                     await ChatClient.SendMessageAsync(ClientMessage, MessageStatus.Usual);
                     ClientMessage = string.Empty;
@@ -81,12 +80,12 @@ namespace ChatClientApp
             });
             JoinChatCommand = new RelayCommand(async () =>
             {
-                if (!string.IsNullOrEmpty(UserName) && string.IsNullOrEmpty(ChatClient.UserName))
+                if (!string.IsNullOrEmpty(UserName) && string.IsNullOrEmpty(ChatClient.User.Name))
                 {
-                    ChatClient.UserName = UserName;
+                    ChatClient.User.Name = UserName;
                     ChatClient.NotifyUserJoinChat();
                     UserName = string.Empty;
-                    ChatingIsAllowed = true;
+                    ChattingIsAllowed = true;
                 }
                 else
                 {
@@ -99,13 +98,20 @@ namespace ChatClientApp
             });
         }
 
-        private void AddUserTolist(string userName)
+        private void AddUserToList(List<UserObject> usersFromServer)
         {
-            Users.Add(userName);
+            for (int i = Users.Count; i < usersFromServer.Count; ++i)
+            {
+                Users.Add(usersFromServer[i]);
+            }
         }
-        private void RemoveUserFromlist(string userName)
+        private void RemoveUserFromList(string userId)
         {
-            Users.Remove(userName);
+            UserObject? user = Users.Where((u) => u.Id == userId).FirstOrDefault();
+            if (user != null)
+            {
+                Users.Remove(user);
+            }
         }
     }
 }

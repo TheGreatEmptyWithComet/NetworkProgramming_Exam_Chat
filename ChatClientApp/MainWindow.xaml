@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatClientApp"
         mc:Ignorable="d"
-        Height="600" Width="1000"
+        Height="550" Width="900"
         Background="#36393F"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -146,5 +146,6 @@
                           ItemContainerStyle="{DynamicResource Style_ChatItem}"/>
             </ScrollViewer>
         </DockPanel>
+        <!--<Label Background="#FF32A27B"/>-->
     </Grid>
 </Window>

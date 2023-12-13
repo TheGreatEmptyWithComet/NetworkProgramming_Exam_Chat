@@ -13,7 +13,7 @@
         </Setter>
         
         <Style.Triggers>
-            <DataTrigger Binding="{Binding ChatingIsAllowed}" Value="False">
+            <DataTrigger Binding="{Binding ChattingIsAllowed}" Value="False">
                 <Setter Property="IsEnabled" Value="False"/>
             </DataTrigger>
             <Trigger Property="IsMouseOver"  Value="True">
@@ -36,7 +36,7 @@
         </Setter>
 
         <Style.Triggers>
-            <DataTrigger Binding="{Binding ChatingIsAllowed}" Value="False">
+            <DataTrigger Binding="{Binding ChattingIsAllowed}" Value="False">
                 <Setter Property="IsEnabled" Value="True"/>
             </DataTrigger>
             <Trigger Property="IsMouseOver"  Value="True">
