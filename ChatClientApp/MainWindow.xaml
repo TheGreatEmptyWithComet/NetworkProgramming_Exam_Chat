@@ -146,6 +146,5 @@
                           ItemContainerStyle="{DynamicResource Style_ChatItem}"/>
             </ScrollViewer>
         </DockPanel>
-        <!--<Label Background="#FF32A27B"/>-->
     </Grid>
 </Window>

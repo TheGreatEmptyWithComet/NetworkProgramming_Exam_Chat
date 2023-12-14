@@ -25,8 +25,6 @@ namespace ChatClientApp
         {
             InitializeComponent();
 
-            Thread.Sleep(500);
-
             DataContext = new ChatClientViewModel();
         }
 
