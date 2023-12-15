@@ -60,7 +60,7 @@ namespace ChatClientApp
         public ChatClientViewModel()
         {
             ChatClient = new ChatClient();
-            ChatClient.Start();
+            ChatClient.ProcessIncomingMessages();
             ChatClient.OnMessageReceived += (message) => Messages.Add(message);
             ChatClient.OnUserJoined += (users) => AddUserToList(users);
             ChatClient.OnUserLeft += (userId) => RemoveUserFromList(userId);

@@ -7,10 +7,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using Newtonsoft.Json;
+using System.Windows;
 
 namespace ChatClientApp
 {
-    public enum UserState { UserJoin, UserLeft }
     public enum MessageStatus { Usual, UserJoin, UserLeft }
 
     public delegate void MessageReceived(MessageObject messageObject);
@@ -19,28 +19,45 @@ namespace ChatClientApp
 
     public class ChatClient : NotifyPropertyChangedHandler
     {
-        private IPEndPoint localEndPoint;
-        private IPEndPoint serverEndPoint;
-
-        private bool messageWasSent = false;
-        private IPAddress serverIp;
-        public UserObject User { get; set; }
-
+        #region Events
+        /************************************************************************************************************/
         public event MessageReceived OnMessageReceived;
         public event UserJoined OnUserJoined;
         public event UserLeft OnUserLeft;
+        #endregion
+
+
+        #region Field & Properties
+        /************************************************************************************************************/
+        private IPEndPoint localEndPoint;
+        private IPEndPoint serverEndPoint;
+        private MessageObject? incomingMessage;
+        private byte[] buffer;
+
+        private bool messageWasSent = false;
+        private bool userIsConnected = false;
+        private IPAddress serverIp;
+        public UserObject User { get; set; }
+        #endregion
 
         
+        #region Constructor
+        /************************************************************************************************************/
         public ChatClient()
         {
             serverIp = IPAddress.Parse("127.0.0.1");
             serverEndPoint = new IPEndPoint(serverIp, 40000);
+            localEndPoint = new IPEndPoint(IPAddress.Any, 30000);
 
             User = new UserObject() { Id = Guid.NewGuid().ToString() };
+            buffer = new byte[1024];
         }
+        #endregion
 
 
-        public async Task Start()
+        #region Methods
+        /************************************************************************************************************/
+        public async Task ProcessIncomingMessages()
         {
             await Task.Run(() =>
             {
@@ -49,57 +66,26 @@ namespace ChatClientApp
                     using (Socket receiveSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
                     {
                         receiveSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                        localEndPoint = new IPEndPoint(IPAddress.Any, 30000);
                         receiveSocket.Bind(localEndPoint);
-
-                        byte[] buffer = new byte[1024];
-                        string message = string.Empty;
-                        string messageAsJson = string.Empty;
 
                         while (true)
                         {
-                            int receivedBytes = receiveSocket.Receive(buffer);
+                            incomingMessage = GetIncomingMessage(receiveSocket, buffer);
 
-                            messageAsJson = Encoding.ASCII.GetString(buffer, 0, receivedBytes);
+                            if (incomingMessage == null) continue;
 
-                            MessageObject? messageObject = JsonConvert.DeserializeObject<MessageObject>(messageAsJson);
+                            ProcessUserJoinOrLeft();
 
-                            if (messageObject == null) continue;
+                            ProcessMessageIsOwn();
 
-                            // Check if new user join or left chat
-                            if (messageObject.MessageStatus == MessageStatus.UserJoin)
-                            {
-                                // set user color, received from server
-                                if (User.Id == messageObject.User.Id)
-                                {
-                                    User.Color = messageObject.User.Color;
-                                }
-
-                                // add new user to list
-                                List<UserObject>? users = JsonConvert.DeserializeObject<List<UserObject>>(messageObject.AllUsers);
-                                if (users != null)
-                                {
-                                    App.Current.Dispatcher.Invoke((Action)delegate { OnUserJoined?.Invoke(users); });
-                                }
-                            }
-                            else if (messageObject.MessageStatus == MessageStatus.UserLeft)
-                            {
-                                App.Current.Dispatcher.Invoke((Action)delegate { OnUserLeft?.Invoke(messageObject.User.Id); });
-                            }
-
-                            // Check if received message is own sent message
-                            if (messageWasSent == true && User.Id == messageObject.User.Id)
-                            {
-                                messageWasSent = false;
-                                messageObject.IsNativeOrigin = true;
-                            }
-
-                            App.Current.Dispatcher.Invoke((Action)delegate { OnMessageReceived?.Invoke(messageObject); });
-                           
+                            ShowMessage();
                         }
                     }
                 }
-                catch { };
+                catch (Exception e)
+                {
+                    MessageBox.Show($"Error: {e.Message}");
+                };
             });
         }
 
@@ -107,17 +93,7 @@ namespace ChatClientApp
         {
             await Task.Run(() =>
             {
-                // build message object
-                MessageObject messageObject = new MessageObject()
-                {
-                    MessageStatus = messageStatus,
-                    User = User,
-                    Message = message,
-                    Time = DateTime.Now
-                };
-
-                // serialize object to json
-                string messageAsJson = JsonConvert.SerializeObject(messageObject,Formatting.Indented);
+                string messageAsJson = BuildMessage(message, messageStatus);
 
                 // send message
                 using (Socket sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
@@ -128,17 +104,88 @@ namespace ChatClientApp
                 }
             });
         }
+
         public async Task NotifyUserJoinChat()
         {
             string message = $"{User.Name} has joined chat!";
             await SendMessageAsync(message, MessageStatus.UserJoin);
         }
+
         public async Task NotifyUserLeftChat()
         {
             string message = $"{User.Name} has left chat!";
             await SendMessageAsync(message, MessageStatus.UserLeft);
         }
 
+        private MessageObject? GetIncomingMessage(Socket receiveSocket, byte[] buffer)
+        {
+            int receivedBytes = receiveSocket.Receive(buffer);
+            string messageAsJson = Encoding.ASCII.GetString(buffer, 0, receivedBytes);
+            MessageObject? incomingMessage = JsonConvert.DeserializeObject<MessageObject>(messageAsJson);
 
+            return incomingMessage;
+        }
+
+        private void ProcessUserJoinOrLeft()
+        {
+            // Check if new user join or left chat
+            if (incomingMessage!.MessageStatus == MessageStatus.UserJoin)
+            {
+                // set user color, received from server
+                if (User.Id == incomingMessage.User.Id)
+                {
+                    User.Color = incomingMessage.User.Color;
+                    userIsConnected = true;
+                }
+
+                if (userIsConnected == false) return;
+
+                // add new user to list
+                List<UserObject>? users = JsonConvert.DeserializeObject<List<UserObject>>(incomingMessage.AllUsers);
+                if (users != null)
+                {
+                    App.Current.Dispatcher.Invoke((Action)delegate { OnUserJoined?.Invoke(users); });
+                }
+            }
+            else if (incomingMessage.MessageStatus == MessageStatus.UserLeft)
+            {
+                App.Current.Dispatcher.Invoke((Action)delegate { OnUserLeft?.Invoke(incomingMessage.User.Id); });
+            }
+        }
+
+        private void ProcessMessageIsOwn()
+        {
+            if (messageWasSent == true && User.Id == incomingMessage!.User.Id)
+            {
+                messageWasSent = false;
+                incomingMessage.IsNativeOrigin = true;
+            }
+        }
+
+        private void ShowMessage()
+        {
+            if (userIsConnected == true)
+            {
+                App.Current.Dispatcher.Invoke((Action)delegate { OnMessageReceived?.Invoke(incomingMessage!); });
+            }
+        }
+
+        private string BuildMessage(string message, MessageStatus messageStatus)
+        {
+            // build message object
+            MessageObject outgoingMessage = new MessageObject()
+            {
+                MessageStatus = messageStatus,
+                User = User,
+                Message = message,
+                Time = DateTime.Now
+            };
+
+            // serialize object to json
+            string messageAsJson = JsonConvert.SerializeObject(outgoingMessage, Formatting.Indented);
+
+            return messageAsJson;
+        }
+        #endregion
     }
 }

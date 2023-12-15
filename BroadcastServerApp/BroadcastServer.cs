@@ -16,6 +16,8 @@ namespace BroadcastServerApp
 
     public class BroadcastServer
     {
+        #region Field & Properties
+        /************************************************************************************************************/
         private readonly int serverPort = 40000;
         private readonly int clientPort = 30000;
 
@@ -26,7 +28,11 @@ namespace BroadcastServerApp
         private List<UserObject> users = new List<UserObject>();
         private List<string> userColors;
         private int lastUserColorIndex = -1;
+        #endregion
 
+
+        #region Constructor
+        /************************************************************************************************************/
         public BroadcastServer()
         {
             serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
@@ -36,7 +42,11 @@ namespace BroadcastServerApp
 
             userColors = new List<string>() { "#FF892FE8", "#FF46E82F", "#FFC18D1B", "#FFE21818", "#FFE82FA6", "#FF5A2ED6", "#FF827F8A", "#FF42B339", "#FF58CAC8", "#FFB9BB07", "#FF32A27B" };
         }
+        #endregion
 
+
+        #region Methods
+        /************************************************************************************************************/
         public void Start()
         {
             serverSocket.EnableBroadcast = true;
@@ -90,11 +100,6 @@ namespace BroadcastServerApp
                 }
             }
         }
-
-        public void AtExit()
-        {
-            serverSocket.Dispose();
-        }
         private string GetNextUserColor()
         {
             if (lastUserColorIndex < userColors.Count - 1)
@@ -108,5 +113,11 @@ namespace BroadcastServerApp
 
             return userColors[lastUserColorIndex];
         }
+        public void AtExit()
+        {
+            serverSocket.Dispose();
+        }
+        #endregion
+
     }
 }
